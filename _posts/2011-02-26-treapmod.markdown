@@ -1,0 +1,137 @@
+---
+author: admin
+comments: true
+date: 2011-02-26 12:22:39+00:00
+layout: post
+slug: treapmod
+title: NOI2009 二叉查找树
+wordpress_id: 179
+categories:
+- 解题报告
+tags:
+- noi
+- 动态规划
+- 解题报告
+---
+
+今天早上8点多就来到了黑屋，学了一会四边形不等式，研究了一会微积分，便想找个题刷。想到前几天看到treapmod这个题有思路，就写了写。
+权值的具体大小无所谓，重要的是他们的大小关系，最开始忘了考虑一个点权值增大使另一个点变成根的情况，经同学提醒这个情况后，又经过一中午的思考，有想到了了一个方程。调试了一下午，可还是0分，干脆把第一个数据画了出来，竟发现我的输出没有问题，标准输出似乎有误，有待考证，但确实我的输出应该是可行的。
+问了其他AC这道题目的同学，都是看了解题报告，于是和标准解法自然一样，没有问题。
+下面是未完成的程序，有同样怀疑这道题的人欢迎留言。
+
+    
+    
+    #include <cstdio>
+    #include <algorithm>
+    using namespace std;
+    
+    const int MAXN=75;
+    const int oo=0x7fffffff;
+    
+    struct Node
+    {
+    	int data,w,f;
+    }node[MAXN];
+    
+    inline bool operator < (const Node &a;,const Node &b;)
+    {
+    	return a.data<b.data;
+    }
+    
+    inline void Min(int &a;,int b)
+    {
+    	if (b<a)
+    		a=b;
+    }
+    
+    int N,K;
+    int d[MAXN][MAXN][MAXN],c[MAXN][MAXN][MAXN];
+    int sum[MAXN];
+    
+    pair<int,int> tmp[MAXN];
+    void dp(int i,int j,int p)
+    {
+    	if (d[i][j][p]!=oo) return ;
+    	for(int k=i;k<=j;k++)
+    		tmp[k].first=node[k].w,tmp[k].second=k;	
+    	sort(tmp+i,tmp+j+1);
+    	int rank[MAXN];
+    	for(int k=i;k<=j;k++)
+    		rank[tmp[k].second]=k-i+1;
+    	int p1=0,p2=p;
+    	int orignal=tmp[i+p].second;
+    	for(int k=i;k<=j;k++)
+    	{
+    		int cost=sum[j]-sum[i-1];
+    		int de=d[i][j][p];
+    		if (rank[k]<=p)
+    			p2--;
+    		if (rank[k]<=p+1)
+    		{
+    			dp(i,k-1,p1);dp(k+1,j,p2);
+    			Min(d[i][j][p],d[i][k-1][p1]+d[k+1][j][p2]+cost);
+    		}
+    		else if (rank[k]==p+2)
+    		{
+    			if (orignal>k)
+    			{
+    				dp(i,k-1,p1);dp(k+1,j,p2+1);
+    				cost+=K;
+    				Min(d[i][j][p],d[i][k-1][p1]+d[k+1][j][p2+1]+cost);
+    			}
+    			else
+    			{
+    				dp(i,k-1,p1+1);dp(k+1,j,p2);
+    				cost+=K;
+    				Min(d[i][j][p],d[i][k-1][p1+1]+d[k+1][j][p2]+cost);
+    			}
+    		}
+    		else
+    		{
+    			dp(i,k-1,p1);dp(k+1,j,p2);
+    			cost+=K;
+    			Min(d[i][j][p],d[i][k-1][p1]+d[k+1][j][p2]+cost);
+    		}
+    		if (rank[k]<=p)
+    			p1++;
+    		if (d[i][j][p]!=de)
+    			c[i][j][p]=k;
+    	}
+    }
+    
+    int main()
+    {
+    	freopen("treapmod.in","r",stdin);
+    	freopen("treapmod.out","w",stdout);
+    	scanf("%d%d",&N;,&K;);
+    	for(int i=1;i<=N;i++)
+    		scanf("%d",&node;[i].data);
+    	for(int i=1;i<=N;i++)
+    		scanf("%d",&node;[i].w);
+    	for(int i=1;i<=N;i++)
+    		scanf("%d",&node;[i].f);
+    	sort(node+1,node+N);
+    	for(int i=1;i<=N;i++)
+    		printf("%d ",node[i].data);
+    	printf("n");
+    	for(int i=1;i<=N;i++)
+    		printf("%d ",node[i].w);
+    	printf("n");
+    	for(int i=1;i<=N;i++)
+    		printf("%d ",node[i].f);
+    	printf("n");
+    	for(int i=0;i<=N;i++)
+    		for(int j=0;j<=N;j++)
+    			for(int k=0;k<=N;k++)
+    				d[i][j][k]=oo;
+    	for(int i=1;i<=N;i++)
+    	{
+    		d[i][i][0]=d[i][i][1]=node[i].f;
+    		d[i][i-1][0]=0;d[i+1][i][0]=0;
+    		sum[i]=sum[i-1]+node[i].f;
+    	}	
+    	dp(1,N,0);
+    	printf("%dn",d[1][N][0]);
+    	return 0;
+    }
+    

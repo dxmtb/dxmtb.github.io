@@ -1,0 +1,74 @@
+---
+author: admin
+comments: true
+date: 2010-10-26 04:25:26+00:00
+layout: post
+slug: noi2010energy
+title: NOI2010 能量采集 解题报告
+wordpress_id: 52
+categories:
+- 解题报告
+tags:
+- '2010'
+- noi
+- 解题报告
+---
+
+这道题朴素80分，这里要讲的是AC算法。
+
+通过观察可以发现，每颗植物（即每个整点）设坐标为(x,y)，则可以对答案贡献2*gcd(x,y)-1，所以最后答案就是2*∑gdc(i,j)-n*m，其中(i<=m,j<=n)。所以朴素做法复杂度为O(mnlog(min(n,m)))。
+
+我们有d[i]表示1..[n/i]和1..[m/i]中互质的数对个数（颠倒位置算不同方案），可以发现，d[i]即为1..n和1..m最大公约数是i的数对个数。因为①对于每一对互质的数(x,y),则x*i<=n,y*i<=m并且x*i和y*i的最大公约数必然是i，②对于每一对最大公约数为i的(a,b),a<=n,b<=m，必然可以写成a=x*i,b=y*i，其中x,y必然是互质的数（否则会有更大的公约数），并且x<=[n/i],y<=[m/i]，所以d[i]包括了所有1..[n/i]和1..[m/i]中互质的数对个数。
+易知，如果我们求得了1<=k<=min(n,m)范围内的所有d[k]的话，那么∑gdc(i,j)=∑d[k]*k，(i<=n,j<=m)。下面要解决的是怎么求d[k]。
+
+假设我们现在想要求d[i]，那么我们设对于所有(x,y)数对，公约数（注意不一定是最大）有i 的数对个数为p，最大公约数(注意这里是最大)为i*j(j>=2且i*j<=min(n,m))的数对个数为q（即最大公约数不是i但是i的倍数的数对个数），则d[i]=p-q。
+问题又转化为了怎么求q和p。易知p=[n/i]*[m/i]，即1..n所有是i的倍数的数的个数乘上1..m所有是i的倍数的数的个数。对于q，我们只要在求d数组是从大到下递推就可以了q=∑d[i*j]。算法复杂度为O(n^2)，但还是不够优。
+
+我们发现在计算d[i]时，发现若[n/i]=[n/(i+1)]并且[m/i]=[m/(i+1)]，则d[i]与d[i+1]是相等的，因为表示的区间一样！（回想一下d[i]的含义）。加上这个优化，就可以AC了。
+
+需要注意的是，答案需要64位整型存储。
+
+下面是我的代码
+
+    
+    
+    /*
+    ID: dxmtb
+    PROG: NOI2010 能量采集
+    TIME: 2010.10.4
+    STATE: Solved
+    MEMO: 数论
+    */
+    #include <iostream>
+    #include <cstdio>
+    using namespace std;
+    
+    const long long MAXN=100005;
+    
+    long long n,m,re;
+    long long d[MAXN];
+    
+    int main()
+    {
+    	freopen("energy.in","r",stdin);
+    	freopen("energy.out","w",stdout);
+    	cin>>n>>m;
+    	long long K=n>m?m:n;
+    	long long t=0x7fffffff;
+    	for(long long i=K;i>=1;i--)
+    	{
+    		d[i]=(n/i)*(m/i);
+    		if (d[i]==t)
+    			d[i]=d[i+1];
+    		else
+    		{
+    			t=d[i];
+    			for(long long j=2;j<=K/i;j++)
+    				d[i]-=d[i*j];
+    		}
+    		re+=d[i]*i;
+    	}
+    	cout<<re*2-n*m<<endl;
+    	return 0;
+    }
+    

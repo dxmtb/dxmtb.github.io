@@ -1,0 +1,157 @@
+---
+author: admin
+comments: true
+date: 2011-03-05 10:29:32+00:00
+layout: post
+slug: party
+title: NOI2008 假面舞会
+wordpress_id: 249
+categories:
+- 解题报告
+tags:
+- dfs
+- noi
+- 解题报告
+---
+
+这个题写了有三天，头都大了。
+最开始以为是水题，后来发现自己得出了错误的结论。
+然后今天向xmz阐述我的结论，发现错了，更悲剧的是又得出了一个错误的结论。
+最后还是想清楚了所有情况，想到了正确的算法，AC了这道题。
+主要利用了以下结论：
+结论1：对于一个单纯的链，对答案没有影响（例如可以都指定面具号为1，2，3..k,1,2,3..k)
+结论2：对于一个有向环，限制了答案必须是环长度的约数。
+结论3：对于有公共起点和终点的两条链，限制了答案必须是两条链长度差的约数。
+结论4：对于没有2、3情况的弱连通分量（变成无向图后连通的图），将其分层（即同一层面具相同），那么层数就是这个弱连通分量的面具数。
+计算答案时，对于2、3的情况，最大值即为最大公约数，最小值即为最大公约数的大于等于3的最小约数。
+对于4，最小值是每个分量的面具数最小值，最大值即为每个分量的面具数和。
+具体实现时，我们采用dfs的方法。a能看见b则连一条有向边(a,b),赋给每个点一个“深度”值。初始点为0，向前走深度加1，向后走（即反着有向边走）深度减1，所以深度不但有可能是负数，还有可能会有多种答案。
+对于1情况，自然一个点的深度是确定的，这个图就像一颗无根树（初始点不一定深度最小）一样。
+对于2、3情况，必然会出现多种答案的情况。对于这两种情况，dfs的过程中必然有环上（情况3实际上也相当与一个环）一个点u枚举下一个点时，发现有个点v已经被调用过dfs，但这个点还没有被dfs完，即这个点v是u的一个祖先节点（即在从初始点到u的路径上），所以v的新"深度”（不要更新）与原先“深度”差的绝对值就是环或链的长度。
+最后统计一下答案就可以了。需要注意的是，对于最简单的只有分层没有情况2、3时，还有注意是否满足面具数大于等于3的条件。
+
+    
+    
+    /*
+    ID: dxmtb
+    PROG: NOI2008 假面舞会
+    TIME: 2011.03.05
+    STATE: Solved
+    MEMO: dfs
+    */
+    #include <cstdio>
+    #include <cmath>
+    #include <cstdlib>
+    #include <cstring>
+    #include <queue>
+    using namespace std;
+    
+    const int MAXN=100005;
+    const int oo=~0u>>1;
+    
+    struct Node
+    {
+    	int v,w;
+    	Node *next;
+    	Node(const int &_v,const int &_w,Node *_next):
+    	    v(_v),w(_w),next(_next){}
+    	Node(){}
+    	void *operator new (unsigned ,void *p){return p;}
+    }*adj[MAXN],pool[MAXN*30],*mem=pool;
+    
+    void addedge(int u,int v)
+    {
+    	adj[u]=new (mem++)Node(v,1,adj[u]);
+    	adj[v]=new (mem++)Node(u,-1,adj[v]);
+    }
+    
+    void noanswer()
+    {
+    	printf("-1 -1\n");
+    	exit(0);
+    }
+    
+    int gcd(int a,int b)
+    {
+    	int t;
+    	while(b!=0)
+    	{
+    		t=a%b;
+    		a=b;
+    		b=t;
+    	}
+    	return a;
+    }
+    
+    int N,M;
+    int dep[MAXN];
+    
+    int T;
+    int circle;
+    int d[MAXN],f[MAXN];
+    int mindep,maxdep;
+    void dfs(int u)
+    {
+    	if (d[u]!=0)
+    		printf("wrong\n");
+    	d[u]=++T;
+    	if (dep[u]<mindep)
+    		mindep=dep[u];
+    	if (dep[u]>maxdep)
+    		maxdep=dep[u];
+    	for(Node *p=adj[u];p;p=p->next)
+    		if (!d[p->v])
+    		{
+    			dep[p->v]=dep[u]+p->w;
+    			dfs(p->v);
+    		}
+    		else if (dep[p->v]!=dep[u]+p->w)
+    		{
+    			//find a circle
+    			int size=abs(dep[u]+p->w-dep[p->v]);
+    			circle=gcd(size,circle);
+    			if (circle<3)
+    			       	noanswer();
+    		}
+    	f[u]=++T;
+    }
+    
+    int rmax;
+    void solve()
+    {
+    	for(int i=1;i<=N;i++)
+    		if (!f[i])
+    		{
+    			mindep=oo,maxdep=-oo;
+    			dfs(i);
+    			rmax+=maxdep-mindep+1;
+    		}
+    	if (circle)
+    	{
+    		printf("%d",circle);
+    		for(int i=3;i<=circle;i++)
+    			if (circle%i==0)
+    			{
+    				printf(" %d\n",i);
+    				return ;
+    			}
+    	}
+    	if (rmax<3) noanswer();
+    	else printf("%d %d\n",rmax,3);
+    }
+    
+    int main()
+    {
+    	freopen("party.in","r",stdin);
+    	freopen("party.out","w",stdout);
+    	scanf("%d%d",&N;,&M;);
+    	while(M--)
+    	{
+    		int a,b;
+    		scanf("%d%d",&a;,&b;);
+    		addedge(a,b);
+    	}
+    	solve();
+    	return 0;
+    }
+    

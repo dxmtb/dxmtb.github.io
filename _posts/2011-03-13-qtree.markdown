@@ -1,0 +1,221 @@
+---
+author: admin
+comments: true
+date: 2011-03-13 03:36:18+00:00
+layout: post
+slug: qtree
+title: SPOJ375 QTREE
+wordpress_id: 294
+categories:
+- 解题报告
+tags:
+- qtree
+- 动态树
+- 解题报告
+---
+
+这道题可以用树链剖分，但我是用动态树做的，详见杨哲《SPOJ375 QTREE 解法的一些研究》。一次AC，爽啊！
+
+    
+    
+    /*
+    ID: dxmtb
+    PROG: SPOJ375 QTREE
+    TIME: 2011.03.12
+    STATE: Solved
+    MEMO: 动态树
+    */
+    #include <cstdio>
+    #include <cstring>
+    #include <queue>
+    #include <vector>
+    using namespace std;
+    const int MAXN=10005;
+    
+    struct ANode
+    {
+    	int v,w;
+    	ANode *next;
+    	ANode(int _v,int _w,ANode *_next):
+    		v(_v),w(_w),next(_next){}
+    	ANode(){}
+    	void *operator new (unsigned ,void *p){return p;}
+    }pool[MAXN*2],*mem,*adj[MAXN];
+    
+    inline void addedge(int u,int v,int w)
+    {
+    	adj[u]=new (mem++)ANode(v,w,adj[u]);
+    	adj[v]=new (mem++)ANode(u,w,adj[v]);
+    }
+    
+    struct Node
+    {
+    	int cost,maxcost;
+    	bool root;
+    	Node *c[2],*father;
+    	void init();
+    	void rz()
+    	{
+    		maxcost=max(max(c[0]->maxcost,c[1]->maxcost),cost);
+    	}
+    	void zig(bool d);
+    	void splay();
+    }tree[MAXN],Tnull,*null=&Tnull;
+    
+    void Node::init()
+    {
+    	root=true;
+    	cost=maxcost=0;
+    	c[0]=c[1]=father=null;
+    }
+    
+    void Node::zig(bool d)
+    {
+    	Node *p=father;
+    	p->c[d]=c[!d];
+    	c[!d]->father=p;
+    	father->rz();
+    	father=p->father;
+    	if (p->father->c[0]==p) p->father->c[0]=this;
+    	else if (p->father->c[1]==p) p->father->c[1]=this;
+    	c[!d]=p;
+    	p->father=this;
+    	rz();
+    	if (p->root)
+    		p->root=false,root=true;
+    }
+    
+    void Node::splay()
+    {
+    	while(!root)
+    	{
+    		bool d=(father->c[1]==this);
+    		if (father->root)
+    		{
+    			zig(d);
+    			break;
+    		}
+    		bool dd=(father->father->c[1]==father);
+    		if (d==dd) zig(d),zig(d);
+    		else zig(d),zig(dd);
+    	}
+    }
+    
+    void access(Node *u)
+    {
+    	Node *v=null;
+    	while(u!=null)
+    	{
+    		u->splay();
+    		u->c[1]->root=true;
+    		u->c[1]=v;
+    		v->root=false;
+    		u->rz();
+    		v=u;
+    		u=u->father;
+    	}
+    }
+    
+    void access2(Node *u)
+    {
+    	Node *v=null;
+    	while(u!=null)
+    	{
+    		u->splay();
+    		if (u->father==null)
+    			printf("%d\n",max(u->c[1]->maxcost,v->maxcost));
+    		u->c[1]->root=true;
+    		u->c[1]=v;
+    		v->root=false;
+    		u->rz();
+    		v=u;
+    		u=u->father;
+    	}
+    }
+    
+    void query(int u,int v)
+    {
+    	access(tree+u);
+    	access2(tree+v);
+    }
+    
+    void change(int u,int cost)
+    {
+    	access(tree+u);
+    	tree[u].splay();
+    	tree[u].cost=cost;
+    	tree[u].rz();
+    }
+    
+    int father[MAXN];
+    void bfs()
+    {
+    	queue<int> q;
+    	memset(father,-1,sizeof(father));
+    	q.push(1);
+    	father[1]=0;
+    	while(q.size())
+    	{
+    		int u=q.front();q.pop();
+    		for(ANode *p=adj[u];p;p=p->next)
+    			if (father[p->v]==-1)
+    			{
+    				father[p->v]=u;
+    				tree[p->v].father=tree+u;
+    				tree[p->v].cost=tree[p->v].maxcost=p->w;
+    				q.push(p->v);
+    			}
+    	}
+    }
+    
+    vector<pair<int,int> >edge;
+    int N;
+    int main()
+    {
+    	int T;
+    	scanf("%d",&T;);
+    	while(T--)
+    	{
+    		mem=pool;
+    		scanf("%d",&N;);
+    		for(int i=1;i<=N;i++)
+    		{
+    			adj[i]=NULL;
+    			tree[i].init();
+    		}
+    		edge.clear();
+    		for(int i=0;i<N-1;i++)
+    		{
+    			int a,b,c;
+    			scanf("%d%d%d",&a;,&b;,&c;);
+    			addedge(a,b,c);
+    			edge.push_back(make_pair(a,b));
+    		}
+    		bfs();
+    		char com[10];
+    		while(true)
+    		{
+    			scanf(" %s",com);
+    			if (com[0]=='D')
+    				break;
+    			int a,b;
+    			if (com[0]=='Q')
+    			{
+    				scanf("%d%d",&a;,&b;);
+    				query(a,b);
+    			}
+    			else
+    			{
+    				scanf("%d%d",&a;,&b;);
+    				a--;
+    				int u=edge[a].first,v=edge[a].second;
+    				if (father[u]==v) change(u,b);
+    				else if (father[v]==u) change(v,b);
+    				else printf("Wrong\n");
+    			}
+    		}
+    
+    	}
+     	return 0;
+    }
+    
