@@ -1,0 +1,5 @@
+name: 哈天下凌绝顶
+markdown: redcarpet
+pygments: true
+permalink: pretty
+baseurl: /blog

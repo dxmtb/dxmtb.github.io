@@ -1,0 +1,47 @@
+---
+author: admin
+comments: true
+date: 2010-11-08 23:44:29+00:00
+layout: post
+slug: sjsbirth
+title: Ubuntu信息学简易评测系统
+wordpress_id: 101
+categories:
+- 应用程序
+tags:
+- 评测系统
+---
+
+最近一直在Ubuntu上学习信息学，北航的评测系统的确有点不习惯。以前也有想法写一个评测题目的软件，但对GUI了解的确不是很多。发现其实用bash脚本就可以完成很大一部分任务，就随便写了一个，用来方便自己和大家。暂定名为Simple Judging System，简称SJS，很简陋，见笑～～
+
+    
+    
+    # !/bin/bash
+    name=$1
+    temp=.sjstmp
+    echo "Simple Judging System 1.0 By dxmtb"
+    echo "To Be judged $name"
+    mkdir $temp
+    g++ -Wall $name.cpp -o $temp/$name
+    for num in 1 2 3 4 5 6 7 8 9 10
+    do
+    	echo "Judging $num"
+    	cp "$name$num.in" "$temp/$name.in"
+    	echo 'Running'
+    	cd $temp
+    	"./$name"
+    	cd ..
+    	diff -b $name$num.out $temp/$name.out
+    	echo "Finished $num"
+    	echo
+    done
+    rm -rf $temp
+    
+
+
+使用方法是在一个文件夹内新建一个空文件，把代码粘进去。
+首先让它可执行，可以在属性里调，也可以cd进去输入
+`chmod +x 文件名`
+把题目源程序和输入输出文件规范命名（从文件输入输出，输入文件为题目名编号.in，答案为.ans，编号从一到十），放在一个文件夹内，同时放上这个脚本，执行
+`./文件名`
+欢迎提出Bug和意见（估计这么简单的脚本应该没什么Bug）。

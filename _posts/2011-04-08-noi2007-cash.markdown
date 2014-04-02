@@ -1,0 +1,364 @@
+---
+author: admin
+comments: true
+date: 2011-04-08 08:16:36+00:00
+layout: post
+slug: noi2007-cash
+title: NOI2007 货币兑换
+wordpress_id: 423
+categories:
+- 解题报告
+tags:
+- 动态规划
+- 平衡树
+- 解题报告
+---
+
+d[i]表示第i天结束时最多的钱，那么可以得到一个方程d[i]=max(A[i]*X[k]+B[i]*Y[k])其中X[k]与Y[k]都能通过d[k],rate[k],A[k],B[k]推出来。这样直接转移O(N^2)，可以拿60分。
+
+考虑一下数学变换（省去了角标）:d=max(ax+by) y=-a/b*x+d/b，想像每个x和y是平面内的一个点，那么要使d最大实际是让斜率为-a/b的直线过（x，y）的截距最大，可以想象从上而降一条斜率为-a/b的直线，第一个碰到的点一定是最有决策，所以这个点必然是在凸包上。
+
+于是我们就用平衡树维护一个凸包（只需要右上角部分就可以了），维护凸包内每个点向后的斜率，找到向斜率小于-a/b的斜率最大的点，就是决策点。之后把当前点插入凸包并维护，注意根据原理来处理边界情况。平衡树我使用的是splay。
+
+
+    
+    
+    /*
+     * Problem: NOI2007 货币兑换
+     * Time: 2011.04.02
+     * Author: dxmtb
+     * State: Solved
+     * Memo: dp+凸包
+    */
+    #include <cstdio>
+    #include <cmath>
+    #include <algorithm>
+    using namespace std;
+    
+    const int MAXN=100005;
+    const double oo=1e15;
+    const double eps=1e-7;
+    
+    #define assert
+    
+    struct Node
+    {
+    	double x,y,k1,k2;//k1 forward k2 backward
+    	int id;
+    	int size;
+    	Node *c[2];
+    	Node *rz(){return size=c[0]->size+1+c[1]->size,this;}
+    	Node (double _x,double _y,Node *c0,Node *c1):
+    		x(_x),y(_y){c[0]=c0;c[1]=c1;}
+    	Node ();
+    	void *operator new (unsigned,void *p){return p;}
+    	void getk1(Node*);
+    	void getk2(Node*);
+    }pool[MAXN],*mem=pool,Tnull,*null=&Tnull;,*sen1,*sen2;
+    
+    inline double getk(double x1,double y1,double x2,double y2)
+    {
+    	assert(x1!=x2);
+    	return (y1-y2)/(x1-x2);
+    }
+    
+    inline double getk(Node *p,double x,double y)
+    {
+    	return getk(p->x,p->y,x,y);
+    }
+    
+    void Node::getk1(Node *p)
+    {
+    	k1=getk(x,y,p->x,p->y);
+    }
+    void Node::getk2(Node *p)
+    {
+    	k2=getk(x,y,p->x,p->y);
+    }
+    
+    Node::Node()
+    {
+    	id=this-pool-1;
+    	c[0]=c[1]=null;
+    }
+    
+    struct Splay
+    {
+    	Node *root;
+    	Splay()
+    	{
+    		root=new (mem++)Node();
+    		root->c[1]=new (mem++)Node();
+    		root->c[1]->x=oo;
+    		root->c[1]->k1=-oo;
+    		root->k1=0;
+    		sen2=root->c[1]->rz();
+    		sen1=root->rz();
+    	}
+    	void zig(bool d)
+    	{
+    		Node *p=root->c[d];
+    		root->c[d]=null->c[d];
+    		null->c[d]=root;
+    		root=p;
+    	}	
+    	void zigzig(bool d)
+    	{
+    		Node *p=root->c[d]->c[d];
+    		root->c[d]->c[d]=null->c[d];
+    		null->c[d]=root->c[d];
+    		root->c[d]=root->c[d]->c[!d];
+    		null->c[d]->c[!d]=root->rz();
+    		root=p;
+    	}
+    	void finish(bool d)
+    	{
+    		Node *p=root->c[!d],*t=null->c[d];
+    		while(t!=null)
+    		{
+    			t=null->c[d]->c[d];
+    			null->c[d]->c[d]=p;
+    			p=null->c[d]->rz();
+    			null->c[d]=t;
+    		}
+    		root->c[!d]=p;
+    	}
+    	void select(int k)
+    	{
+    		assert(k>=0);
+    		int t;
+    		while(true)
+    		{
+    			bool d=(k>(t=root->c[0]->size));
+    			if (k==t || root->c[d]==null)
+    				break;
+    			if (d) k-=t+1;
+    			bool dd=(k>(t=root->c[d]->c[0]->size));
+    			if (k==t || root->c[d]->c[dd]==null)
+    			{
+    				zig(d);
+    				break;
+    			}
+    			if (dd) k-=t+1;
+    			if (d==dd) zigzig(d);
+    			else zig(d),zig(dd);
+    		}
+    		finish(0);
+    		finish(1);
+    		root->rz();
+    	}
+    	void searchx(double x)
+    	{
+    		while(true)
+    		{
+    			bool d=(x>=root->x);
+    			if (root->c[d]==null)
+    				break;
+    			bool dd=(x>=root->c[d]->x);
+    			if (root->c[d]->c[dd]==null)
+    			{
+    				zig(d);
+    				break;
+    			}
+    			if (d==dd) zigzig(d);
+    			else zig(d),zig(dd);
+    		}
+    		finish(0);
+    		finish(1);
+    		root->rz();
+    		if (x<root->x)
+    			select(root->c[0]->size-1);
+    		assert(root->x<=x);
+    	}
+    	void searchk(double x)
+    	{
+    		while(true)
+    		{
+    			bool d=(x<root->k1);
+    			if (root->c[d]==null)
+    				break;
+    			bool dd=(x<root->c[d]->k1);
+    			if (root->c[d]->c[dd]==null)
+    			{
+    				zig(d);
+    				break;
+    			}
+    			if (d==dd) zigzig(d);
+    			else zig(d),zig(dd);
+    		}
+    		finish(0);
+    		finish(1);
+    		root->rz();
+    		if (x<root->k1)
+    			select(root->c[0]->size+1);
+    		assert(root->k1<=x);
+    	}
+    	void succreplaceroot()
+    	{
+    		Node *oldroot=root;
+    		root=root->c[1];
+    		select(0);
+    		assert(root->c[0]==null);
+    		root->c[0]=oldroot->c[0];
+    		root->rz();
+    	}
+    	void predreplaceroot()
+    	{
+    		Node *oldroot=root;
+    		root=root->c[0];
+    		select(root->size-1);
+    		assert(root->c[1]==null);
+    		root->c[1]=oldroot->c[1];
+    		root->rz();
+    	}
+    	Node *pred()
+    	{
+    		assert(root!=sen1);
+    		Node *p=root->c[0];
+    		if (p==null)
+    			return sen1;
+    		while(p->c[1]!=null)
+    			p=p->c[1];
+    		return p;
+    	}
+    	Node *succ()
+    	{
+    		Node *p=root->c[1];
+    		if (p==null)
+    			return sen2;
+    		while(p->c[0]!=null)
+    			p=p->c[0];
+    		return p;
+    	}
+    	void succtoroot()
+    	{
+    		select(root->c[0]->size+1);
+    	}
+    	void insert(double x,double y)
+    	{
+    		Node *p;
+    		searchx(x);//root->x<=x
+    		if (root->size==2)
+    		{
+    			root=new (mem++)Node(x,y,root,root->c[1]);
+    			root->c[0]->c[1]=null;
+    			root->c[0]->rz();
+    			root->rz();
+    			assert((p=pred())==sen1);
+    			root->k2=1e-7;//should not be used
+    			assert((p=succ())==sen2);
+    			root->k1=-oo+1;//should not be used
+    			return ;
+    		}
+    		if (fabs(root->x-x)<eps)
+    		{
+    			assert(root!=sen1);
+    			if (root->y>=y)
+    				return ;
+    			else 
+    				predreplaceroot();
+    		}
+    		assert(root->x<x);
+    		while(root!=sen1 && (p=pred())!=sen1)
+    		{
+    			assert(root->k2==p->k1);
+    			if (root->k2<=getk(root,x,y))
+    				predreplaceroot();
+    			else
+    				break;
+    		}
+    		while(root!=sen1 && getk(root,x,y)>=0)
+    			predreplaceroot();
+    		assert(root->x<x);
+    		double kk=getk(root,x,y);
+    		succtoroot();
+    		assert(root->x>x);
+    		while(root!=sen2 && (p=succ())!=sen2)
+    		{
+    			assert(root->k1==p->k2);
+    			if (kk<=getk(root,x,y))
+    				succreplaceroot();
+    			else
+    				break;
+    		}
+    		while(root!=sen2 && (p=succ())!=sen2)
+    		{
+    			assert(root->k1==p->k2);
+    			if (root->k1>=getk(root,x,y))
+    				succreplaceroot();
+    			else
+    				break;
+    		}
+    		assert(root->x>x);
+    		//insert
+    		p=root;
+    		root=root->c[0];
+    		select(root->size);
+    		root=new (mem++)Node(x,y,root,p);
+    		root->c[1]->c[0]=null;
+    		root->c[1]->rz();
+    		root->rz();
+    		if ((p=pred())==sen1)
+    			root->k2=1e-7;//should not be used
+    		else
+    		{
+    			p->getk1(root);
+    			root->getk2(p);
+    		}
+    		if ((p=succ())==sen2)
+    			root->k1=-oo+1;//should not be used
+    		else
+    		{
+    			p->getk2(root);
+    			root->getk1(p);
+    		}
+    		assert((p=pred())->k1>=root->k1);
+    		assert(root->k1>=(p=succ())->k1);
+    	}
+    }tree;
+    
+    int N;
+    double A[MAXN],B[MAXN],Rate[MAXN];
+    double d[MAXN];
+    
+    inline double gety(int i)
+    {
+    	return d[i]/(Rate[i]*A[i]+B[i]);
+    }
+    
+    inline double getx(int i)
+    {
+    	return gety(i)*Rate[i];
+    }
+    
+    int main()
+    {
+    	freopen("cash.in","r",stdin);
+    	freopen("cash.out","w",stdout);
+    	int S;
+    	scanf("%d%d",&N;,&S;);
+    	d[1]=S;
+    	for(int i=1;i<=N;i++)
+    		scanf("%lf%lf%lf",A+i,B+i,Rate+i);
+    	tree.insert(getx(1),gety(1));
+    	for(int i=2;i<=N;i++)
+    	{
+    		tree.searchk(-A[i]/B[i]);
+    		double x=tree.root->x,y=tree.root->y;
+    		d[i]=max(d[i-1],A[i]*x+B[i]*y);
+    //		if (d[i]==d[i-1]) printf("0 ");
+    //		else printf("%d ",tree.root->id);
+    		tree.insert(getx(i),gety(i));
+    //		printf("%lf\n",d[i]);
+    	}
+    /*	printf("\n");
+    	for(int i=1;i<=N;i++)
+    		printf("%.3lf ",d[i]);
+    	printf("\n");*/
+    	printf("%.3lf\n",d[N]);
+    	return 0;
+    }
+    
+
+
+
