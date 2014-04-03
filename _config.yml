@@ -2,5 +2,4 @@ name: 哈天下凌绝顶
 markdown: redcarpet
 pygments: true
 relative_permalinks: true
-permalink: :title/
-baseurl: /blog
+permalink: /blog/:title/
