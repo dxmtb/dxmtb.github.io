@@ -1,0 +1,183 @@
+---
+author: admin
+comments: true
+date: 2011-05-04 14:26:44+00:00
+layout: post
+slug: hnoi2008country
+title: HNOI2008 神奇的国度
+wordpress_id: 460
+categories:
+- 解题报告
+tags:
+- hnoi
+- 图论
+- 弦图
+- 解题报告
+---
+
+弦图，没看出来……可以参见陈丹琦的弦图幻灯片。
+
+什么是弦图呢？就是对于图中的任意一个长度大于3的环，都有一条弦。那么什么是弦呢？就是连接环上两个不相邻的点的边。
+
+这个题实际上是求每个点染一个色，任意两个有边相连的点颜色不同，最少的颜色数（这个数叫做图的色数）。
+
+对于弦图有一个特殊的性质：色数等于团数。
+
+那么什么是团数呢？先要说一下什么是团。一个团就是一个图的导出子图（选定一些顶点，这些顶点之间的边同时必须选到子图里），并且这个子图是一个完全图（任意两点有边相连）。那么可以知道一个图可能有多个团，其中顶点数最多的一个团的顶点数就是团数。
+
+所以我们只要找到包含顶点数最多的的一个团（最大团）就可以了。
+
+那么怎么求一个弦图的极大团？这就需要求一个“完美消除序列”，详见ppt。
+
+我用的是MCS算法，时间复杂度O（N+M）。具体做法是建一个链表有序记录当前有效的label[i]（即链表内是所有存在的label[i]），再有N个链表记录各个label具体对应那些节点。每次找到最大的很明显是O（1）了。更新只会使每个节点的label加1，设一个点未更新前标号为label，如果第一个链表里没有label+1这个节点，就直接把label+1插到label后边就行了。如果增加以后没有节点标号为label，在第一个链表里删除这个节点。第二组链表直接插入删除就行了。为了找到第一个链表label对应的位置，可以使每个label使用固定的节点（即提前开好，需要用时拿来用），这样O（1）就可以找到，而不用遍历链表。
+
+看网上的程序都模拟了一下染色过程，其实没有必要，因为没有求方案。直接求出团数输出就可以了。
+
+
+
+    
+    
+    /*
+     * Problem: [HNOI2008]神奇的国度
+     * Time: 2011.05.04
+     * Author: dxmtb
+     * State: Solved
+     * Memo: 弦图
+    */
+    #include <cstdio>
+    
+    const int MAXN=10005,MAXM=1000005;
+    
+    struct Node
+    {
+    	int v;
+    	Node *next;
+    	Node (int _v,Node *_next):v(_v),next(_next){}
+    	Node (){}
+    	void *operator new (size_t,void *p){return p;}
+    }*adj[MAXN],pool[MAXM*2],*mem=pool;
+    
+    inline void addedge(int u,int v)
+    {
+    	adj[u]=new (mem++)Node(v,adj[u]);
+    	adj[v]=new (mem++)Node(u,adj[v]);
+    }
+    
+    struct List
+    {
+    	int v;
+    	List *next,*back;
+    	List(){}
+    	void *operator new (size_t,void *p){return p;}
+    }pool1[MAXN],pool2[MAXN];
+    
+    List *L1;
+    List *L2[MAXN];
+    
+    inline void connect(List *a,List *b)
+    {
+    	a->next=b;
+    	b->back=a;
+    }
+    
+    inline void push_back(List *&L;,List *mem)
+    {
+    	if (L==NULL)
+    	{
+    		L=mem;
+    		L->next=L->back=L;
+    	}
+    	else
+    	{
+    		List *p=L->back;
+    		connect(p,mem);
+    		connect(mem,L);
+    	}
+    }
+    
+    inline void pop_back(List *&L;)
+    {
+    	if (L->next==L)
+    		L=NULL;
+    	else
+    		connect(L->back->back,L);
+    }
+    
+    int N;
+    int pos[MAXN];
+    
+    void init()
+    {
+    	for(int i=0;i<=N;i++)
+    		pool1[i].v=pool2[i].v=i;
+    	L1=pool1;
+    	L1->next=L1->back=L1;
+    	for(int i=1;i<=N;i++)
+    		push_back(L2[0],pool2+i);
+    }
+    
+    inline void up(int u)
+    {
+    	int x=pos[u];
+    	pos[u]++;
+    	//check L1
+    	//insert x+1 if not exist
+    	if (pool1[x].next!=&pool1;[x+1])
+    	{
+    		connect(&pool1;[x+1],pool1[x].next);
+    		connect(&pool1;[x],&pool1;[x+1]);
+    	}
+    	//remove u from x
+    	if (L2[x]->next!=L2[x])//after remove u ,x is not empty
+    	{
+    		connect(pool2[u].back,pool2[u].next);
+    		if (L2[x]==&pool2;[u])
+    			L2[x]=pool2[u].next;
+    	}
+    	else
+    	{
+    		connect(pool1[x].back,pool1[x].next);
+    		if (L1==&pool1;[x])
+    			L1=pool1[x].next;
+    		L2[x]=NULL;
+    	}
+    	//insert u to x+1
+    	push_back(L2[x+1],pool2+u);
+    }
+    
+    int ind[MAXN];
+    int M;
+    
+    int main()
+    {
+    	freopen("1006.in","r",stdin);
+    	scanf("%d%d",&N;,&M;);
+    	for(int i=0;i<M;i++)
+    	{
+    		int u,v;
+    		scanf("%d%d",&u;,&v;);
+    		addedge(u,v);
+    	}
+    	init();
+    	int re=1;
+    	for(int i=N;i;i--)
+    	{
+    		int j=L1->back->v;
+    		int u=L2[j]->back->v;
+    		ind[u]=i;
+    		pop_back(L2[j]);
+    		if (L2[j]==NULL)
+    			pop_back(L1);
+    		int ans=1;
+    		for(Node *p=adj[u];p;p=p->next)
+    			if (!ind[p->v])
+    				up(p->v);
+    			else
+    				ans++;
+    		if (ans>re)
+    			re=ans;
+    	}
+    	printf("%d\n",re);
+    	return 0;
+    }
+    

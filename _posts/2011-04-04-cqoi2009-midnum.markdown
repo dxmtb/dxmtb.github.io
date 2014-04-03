@@ -1,0 +1,72 @@
+---
+author: admin
+comments: true
+date: 2011-04-04 04:36:30+00:00
+layout: post
+slug: cqoi2009-midnum
+title: CQOI2009 中位数图
+wordpress_id: 391
+categories:
+- 解题报告
+tags:
+- 解题报告
+---
+
+题目大意是给定一个序列和序列中的某一位，求包含序列中这一位的子序列有多少个。就是用类似区间和的方法搞一搞。假设子序列为从i到j，很明显其中大于给定那一位的数的个数和小于的相等，这下从左向右扫描一遍记录一下就行了。
+
+    
+    
+    /*
+    ID: dxmtb
+    PROG: [CQOI2009]中位数图
+    TIME: 2011.03.30
+    STATE: Solved
+    MEMO: 区间和
+    */
+    #include <cstdio>
+    #include <iostream>
+    using namespace std;
+    
+    const int MAXN=100005;
+    
+    int N,B,pos;
+    int a[MAXN],b[2][MAXN];
+    
+    int main()
+    {
+    	freopen("1303.in","r",stdin);
+    	scanf("%d%d",&N;,&B;);
+    	for(int i=1;i<=N;i++)
+    	{
+    		scanf("%d",a+i);
+    		if (a[i]==B)
+    			pos=i;
+    	}
+    	b[0][0]=1;
+    	int t1=0,t2=0;
+    	for(int i=1;i<pos;i++)
+    	{
+    		if (a[i]<B) t1++;
+    		else t2++;
+    		if (t1<=t2)
+    			b[0][t2-t1]++;
+    		else 
+    			b[1][t1-t2]++;
+    	}
+    	long long re=0;
+    	for(int i=pos;i<=N;i++)
+    	{
+    		if (i!=pos)
+    		{
+    			if (a[i]<B) t1++;
+    			else t2++;	
+    		}
+    		if (t1<=t2)
+    			re+=b[0][t2-t1];
+    		else
+    			re+=b[1][t1-t2];
+    	}
+    	cout<<re<<endl;
+    	return 0;
+    }	
+    
