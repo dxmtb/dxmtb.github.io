@@ -17,7 +17,8 @@ tags:
 题目大意：求一个字符串的最长回文子串，N<=1000。
 这道题是为了练习New LCP写的，WA了好几次。
 注意边界情况，注意计算LCP时指针不要超出字符串长度了，还有相同回文要输出最先出现的。
-<pre lang="CPP">
+
+{% highlight cpp linenos %}
 /*
 ID: dxmtb
 PROG: Ural1297 Palindrome
@@ -100,4 +101,4 @@ int main()
 //	printf("%dn",re);
 	return 0;
 }
-</pre>
+{% endhighlight %}

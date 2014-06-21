@@ -25,7 +25,7 @@ tags:
 总结一下：对于修改操作，中间的段直接修改标号，两边的直接修改sum数组求凸包。注意求凸包时按照x递增的顺序加点，使用graham维护可以不用排序。对于询问操作，两边直接暴力枚举，中间的就用前面的方法二分找出第一个斜率小于-add的直线，取左端点为当前候选答案就可以了。
 
 &nbsp;
-<pre lang='CPP'>
+{% highlight cpp linenos %}
 #include <cstdio>
 #include <cmath>
 #include <vector>
@@ -218,4 +218,4 @@ int main()
 	}
 	return 0;
 }
-</pre>
+{% endhighlight %}

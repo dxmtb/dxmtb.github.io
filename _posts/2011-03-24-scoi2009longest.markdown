@@ -14,7 +14,8 @@ tags:
 ---
 
 bfs计算出两点间连通的最小代价，枚举距离最远的两点就行了。
-<pre lang='CPP'>
+
+{% highlight cpp linenos %}
 /*
 ID: dxmtb
 PROG: [SCOI2009]最长距离
@@ -95,4 +96,4 @@ int main()
 	printf("%.6lf\n",re);
 	return 0;
 }
-</pre>
+{% endhighlight %}

@@ -29,7 +29,7 @@ kmp:O(N+M)
 下附程序:
 
 strstr:
-<pre lang='CPP'>
+{% highlight cpp linenos %}
 #include <cstring>
 #include <cstdio>
 #include <ctime>
@@ -57,10 +57,10 @@ int main()
 	printf("%d\n",time(0)-T);
 	return 0;
 }
-</pre>
+{% endhighlight %}
 
 KMP:
-<pre lang='CPP'>
+{% highlight cpp linenos %}
 #include <cstring>
 #include <cstdio>
 #include <ctime>
@@ -107,10 +107,10 @@ int main()
 	printf("%d\n",time(0)-T);
 	return 0;
 }
-</pre>
+{% endhighlight %}
 
 maker:
-<pre lang='CPP'>
+{% highlight cpp linenos %}
 #include <cstdio>
 
 const int N=1000000;
@@ -126,4 +126,4 @@ int main()
 	printf("b\n");
 	return 0;
 }
-</pre>
+{% endhighlight %}

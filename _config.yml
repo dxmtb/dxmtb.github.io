@@ -1,5 +1,13 @@
 name: 哈天下凌绝顶
+description: 哈凌大侠的博客
+meta_description: 哈凌大侠 博客 OI 计算机
+
 markdown: redcarpet
-pygments: true
+highlighter: pygments
+logo: false
+paginate: 5
+
 permalink: /blog/:title/
-baseurl: /blog
+baseurl: /
+
+disqus: 1
